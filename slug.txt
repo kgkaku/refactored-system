@@ -1,6 +1,5 @@
 # Toffee Channel Slug Mapping
 # Format: Channel Name = slug
-# Add new mappings below
 
  BFL | Live 4 = match-18
 & Pictures HD = andpicture_hd
