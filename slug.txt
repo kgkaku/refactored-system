@@ -1,5 +1,5 @@
-# Toffee Channel Slug Mapping
-# Format: Channel Name = slug
+# Toffee চ্যানেল স্লাগ ম্যাপিং
+# ফরম্যাট: চ্যানেলের নাম = স্লাগ
 
  BFL | Live 4 = match-18
 & Pictures HD = andpicture_hd
