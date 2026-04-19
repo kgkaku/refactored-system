@@ -1,4 +1,4 @@
-name: Refresh Toffee Playlist
+name: Toffee
 
 on:
   schedule:
@@ -6,27 +6,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  refresh:
+  update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: pip install pycryptodome requests
-    
-    - name: Run toffee.py
-      run: python toffee.py
-    
-    - name: Commit and push
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add ottnavigator.m3u nsplayer.m3u toffee.json slug.txt
-        git diff --staged --quiet || git commit -m "Auto-update: $(date '+%Y-%m-%d %H:%M:%S')"
-        git push
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - run: pip install requests pycryptodome
+      
+      - name: Run script
+        env:
+          SCRIPT: ${{ secrets.TOFFEE_PY }}
+        run: |
+          echo "$SCRIPT" | base64 -d > run.py
+          python run.py
+      
+      - name: Commit files
+        run: |
+          git config user.name "refresh-toffee[bot]"
+          git config user.email "bot@refresh.toffee.com"
+          git add *.m3u *.json slug.txt 2>/dev/null || true
+          git commit -m "Update playlists $(date '+%Y-%m-%d %H:%M')" || exit 0
+          git push
