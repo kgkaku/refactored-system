@@ -1,6 +1,6 @@
 # ===================================================
-# Toffee Live TV Playlist Generator - FINAL
-# Sports channels with separate cookies
+# Toffee Live TV Playlist Generator - FINAL FIX
+# সমস্ত চ্যানেলের জন্য কুকি সহ (বাংলা সংস্করণ)
 # ===================================================
 
 import requests
@@ -27,13 +27,13 @@ SLUG_FILE = "slug.txt"
 OUTPUT_FILES = ["ottnavigator.m3u", "nsplayer.m3u", "toffee.json"]
 
 SPORTS_PATTERNS = ["match-", "bdvsnz", "epl", "bfl", "sports", "cricket", "icc", "vs"]
-
-# স্পোর্টস চ্যানেলের জন্য আলাদা ইউজার এজেন্ট
 SPORTS_USER_AGENT = "Toffee/8.8.0 (Linux;Android 7.1.2) ExoPlayerLib/2.18.6"
 NORMAL_USER_AGENT = "okhttp/5.1.0"
 
 # ========== গ্লোবাল ভেরিয়েবল ==========
 slug_mapping = {}
+COOKIE_BLDCMPROD = None
+COOKIE_MPROD = None
 
 # ========== ইউটিলিটি ফাংশন ==========
 def generate_random_hex(bytes_count: int = 16) -> str:
@@ -78,7 +78,6 @@ def get_logo(channel: Dict) -> str:
     return ""
 
 def get_user_agent(title: str, slug: str) -> str:
-    """স্পোর্টস চ্যানেলের জন্য আলাদা user-agent"""
     return SPORTS_USER_AGENT if is_sports_channel(title, slug) else NORMAL_USER_AGENT
 
 # ========== Slug ফাইল ম্যানেজমেন্ট ==========
@@ -98,8 +97,8 @@ def load_slug_mapping() -> Dict:
 
 def save_slug_mapping(mapping: Dict):
     with open(SLUG_FILE, 'w', encoding='utf-8') as f:
-        f.write("# Toffee Channel Slug Mapping\n")
-        f.write("# Format: Channel Name = slug\n\n")
+        f.write("# Toffee চ্যানেল স্লাগ ম্যাপিং\n")
+        f.write("# ফরম্যাট: চ্যানেলের নাম = স্লাগ\n\n")
         for channel, slug in sorted(mapping.items()):
             f.write(f"{channel} = {slug}\n")
 
@@ -126,8 +125,8 @@ def register_device() -> Optional[str]:
             data = resp.json()
             if data.get("success") and "data" in data:
                 return data["data"]["access"]
-    except:
-        pass
+    except Exception as e:
+        print(f"রেজিস্ট্রেশন ত্রুটি: {e}")
     return None
 
 def get_headers(access_token: str) -> Dict:
@@ -138,12 +137,12 @@ def get_headers(access_token: str) -> Dict:
         "Content-Type": "application/json"
     }
 
-def get_playback_data(content_id: str, access_token: str) -> Tuple[Optional[str], Optional[str]]:
-    """প্লেব্যাক API থেকে stream_url ও cookie বের করে"""
+def get_playback_data(content_id: str, access_token: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    global COOKIE_BLDCMPROD, COOKIE_MPROD
     try:
         resp = requests.post(f"{PLAYBACK_BASE}/{content_id}", headers=get_headers(access_token), json={}, timeout=15)
         if resp.status_code != 200:
-            return None, None
+            return None, COOKIE_BLDCMPROD, COOKIE_MPROD
         
         data = resp.json()
         stream_url = None
@@ -155,20 +154,22 @@ def get_playback_data(content_id: str, access_token: str) -> Tuple[Optional[str]
             stream_url = data["url"]
         
         if not stream_url:
-            return None, None
+            return None, COOKIE_BLDCMPROD, COOKIE_MPROD
         
-        cookie = None
         if "set-cookie" in resp.headers:
             match = re.search(r'(Edge-Cache-Cookie=[^;]+)', resp.headers["set-cookie"])
             if match:
                 cookie = match.group(1)
+                if "bldcmprod" in stream_url:
+                    COOKIE_BLDCMPROD = cookie
+                elif "mprod" in stream_url:
+                    COOKIE_MPROD = cookie
         
-        return stream_url, cookie
-    except:
-        return None, None
+        return stream_url, COOKIE_BLDCMPROD, COOKIE_MPROD
+    except Exception as e:
+        return None, COOKIE_BLDCMPROD, COOKIE_MPROD
 
 def get_stream_url_from_slug(title: str, slug: str) -> str:
-    """slug থেকে সঠিক CDN ব্যবহার করে URL তৈরি করে"""
     if is_sports_channel(title, slug):
         return f"https://mprod-cdn.toffeelive.com/live/{slug}/index.m3u8"
     return f"https://bldcmprod-cdn.toffeelive.com/cdn/live/{slug}/playlist.m3u8"
@@ -194,6 +195,8 @@ def fetch_all_channels(access_token: str) -> List[Dict]:
 
 # ========== প্লেলিস্ট জেনারেটর ==========
 def generate_playlists(channels: List[Dict], access_token: str):
+    global COOKIE_BLDCMPROD, COOKIE_MPROD
+    
     ott_lines = ["#EXTM3U"]
     ns_list = []
     toffee_channels = []
@@ -202,112 +205,141 @@ def generate_playlists(channels: List[Dict], access_token: str):
     fallback_success = 0
     sports_count = 0
     
+    # প্রথমে কুকি ক্যাপচার
+    print("\n🍪 কুকি সংগ্রহ করা হচ্ছে...")
     for ch in channels:
+        ch_id = ch.get('id')
+        if ch_id:
+            get_playback_data(ch_id, access_token)
+            if COOKIE_BLDCMPROD and COOKIE_MPROD:
+                break
+    
+    print(f"   🍪 bldcmprod কুকি: {'প্রাপ্ত' if COOKIE_BLDCMPROD else 'প্রাপ্ত নয়'}")
+    print(f"   🍪 mprod কুকি: {'প্রাপ্ত' if COOKIE_MPROD else 'প্রাপ্ত নয়'}")
+    
+    # প্লেলিস্ট তৈরি
+    print("\n📝 প্লেলিস্ট তৈরি করা হচ্ছে...")
+    for idx, ch in enumerate(channels, 1):
         title = ch.get('title')
         ch_id = ch.get('id')
         if not title or not ch_id:
             continue
         
         logo = get_logo(ch)
+        stream_url, cookie_bld, cookie_mprod = get_playback_data(ch_id, access_token)
         
-        # প্রথমে API চেষ্টা (এখান থেকে কুকি ও স্ট্রিম ইউআরএল আসবে)
-        stream_url, cookie = get_playback_data(ch_id, access_token)
-        
-        # API ব্যর্থ হলে slug ম্যাপিং ব্যবহার
+        is_sports = False
         if not stream_url and title in slug_mapping:
             slug = slug_mapping[title]
             stream_url = get_stream_url_from_slug(title, slug)
+            is_sports = is_sports_channel(title, slug)
             fallback_success += 1
-            if is_sports_channel(title, slug):
-                sports_count += 1
         elif stream_url:
             api_success += 1
-            if is_sports_channel(title, ""):
-                sports_count += 1
+            is_sports = "mprod" in stream_url
         else:
             continue
         
-        # সঠিক user-agent নির্বাচন
-        user_agent = get_user_agent(title, slug_mapping.get(title, ""))
+        if is_sports:
+            sports_count += 1
+            final_cookie = COOKIE_MPROD
+            user_agent = SPORTS_USER_AGENT
+        else:
+            final_cookie = COOKIE_BLDCMPROD
+            user_agent = NORMAL_USER_AGENT
         
-        # OTT M3U লাইন
-        ott_lines.append(f'#EXTINF:-1 group-title="Live TV" tvg-logo="{logo}" tvg-name="{title}", {title}')
+        # OTT নেভিগেটর M3U
+        ott_lines.append(f'#EXTINF:-1 group-title="লাইভ টিভি" tvg-logo="{logo}" tvg-name="{title}", {title}')
         ott_lines.append(f'#EXTVLCOPT:http-user-agent={user_agent}')
-        if cookie:
-            ott_lines.append(f'#EXTHTTP:{{"cookie":"{cookie}"}}')
+        if final_cookie:
+            ott_lines.append(f'#EXTHTTP:{{"cookie":"{final_cookie}"}}')
         ott_lines.append(stream_url)
         ott_lines.append('')
         
-        # NS Player JSON
+        # এনএস প্লেয়ার JSON
         ns_list.append({
-            "category": "Live TV",
+            "category": "লাইভ টিভি",
             "name": title,
             "link": stream_url,
             "logo": logo,
-            "cookie": cookie or "",
+            "cookie": final_cookie or "",
             "user_agent": user_agent
         })
         
-        # Toffee JSON
+        # টফি JSON
         toffee_channels.append({
-            "category_name": "Live TV",
+            "category_name": "লাইভ টিভি",
             "name": title,
             "link": stream_url,
-            "headers": {"cookie": cookie or ""},
+            "headers": {"cookie": final_cookie or ""},
             "logo": logo
         })
+        
+        if idx % 30 == 0:
+            print(f"      {idx}/{len(channels)} প্রক্রিয়াকৃত...")
     
-    # ফাইল সেভ
+    # OTT নেভিগেটর M3U ফাইলের শুরুতে ক্রেডিট যোগ
+    current_time = datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")
+    ott_header = f"""#EXTM3U
+# Playlist created by @kgkaku
+# Generated on: {current_time}
+# Total Channels: {len(toffee_channels)} | Active: {api_success + fallback_success}
+
+"""
     with open("ottnavigator.m3u", "w", encoding='utf-8') as f:
-        f.write('\n'.join(ott_lines))
+        f.write(ott_header + '\n'.join(ott_lines[1:]))  # প্রথম #EXTM3U বাদ দিয়ে
     
+    # NS প্লেয়ার JSON (ক্রেডিট ছাড়া)
     with open("nsplayer.m3u", "w", encoding='utf-8') as f:
         json.dump(ns_list, f, indent=2, ensure_ascii=False)
     
+    # টফি JSON (ক্রেডিট সহ)
+    toffee_json = {
+        "name": "Toffee লাইভ টিভি প্লেলিস্ট",
+        "creator": "@kgkaku",
+        "generated_on": current_time,
+        "total_channels": len(toffee_channels),
+        "active_channels": api_success + fallback_success,
+        "channels": toffee_channels
+    }
     with open("toffee.json", "w", encoding='utf-8') as f:
-        json.dump({
-            "name": "Toffee Live TV",
-            "owner": "GitHub: kgkaku",
-            "channels_amount": len(toffee_channels),
-            "updated_on": datetime.now().strftime("%d-%m-%Y at %I:%M:%S %p"),
-            "channels": toffee_channels
-        }, f, indent=2, ensure_ascii=False)
+        json.dump(toffee_json, f, indent=2, ensure_ascii=False)
     
     return len(toffee_channels), api_success, fallback_success, sports_count
 
-# ========== মেইন ==========
+# ========== মেইন ফাংশন ==========
 def main():
     print("=" * 50)
-    print("Toffee Live TV Playlist Generator")
-    print("Sports channels with separate cookies")
+    print("টফি লাইভ টিভি প্লেলিস্ট জেনারেটর")
+    print("সমস্ত চ্যানেলের জন্য কুকি সহ")
     print("=" * 50)
     
     global slug_mapping
     slug_mapping = load_slug_mapping()
-    print(f"✓ Loaded {len(slug_mapping)} slug mappings")
+    print(f"✓ {len(slug_mapping)}টি স্লাগ ম্যাপিং লোড হয়েছে")
     
-    print("\n🔐 Registering device...")
+    print("\n🔐 ডিভাইস রেজিস্ট্রেশন হচ্ছে...")
     access_token = register_device()
     if not access_token:
-        print("❌ Registration failed!")
+        print("❌ রেজিস্ট্রেশন ব্যর্থ!")
         return
-    print("✓ Device registered")
+    print("✓ ডিভাইস রেজিস্ট্রেশন সফল")
     
-    print("\n📺 Fetching channels...")
+    print("\n📺 চ্যানেল সংগ্রহ করা হচ্ছে...")
     channels = fetch_all_channels(access_token)
-    print(f"✓ Found {len(channels)} channels")
+    print(f"✓ {len(channels)}টি চ্যানেল পাওয়া গেছে")
     
-    print("\n📝 Generating playlists...")
+    print("\n📝 প্লেলিস্ট তৈরি করা হচ্ছে...")
     total, api, fallback, sports = generate_playlists(channels, access_token)
     
-    # নতুন চ্যানেল পাওয়া গেলে slug.txt আপডেট
+    # নতুন স্লাগ ম্যাপিং সংরক্ষণ
     new_mappings = {}
     for ch in channels:
         title = ch.get('title')
         if title and title not in slug_mapping:
             ch_id = ch.get('id')
             if ch_id:
-                stream_url, _ = get_playback_data(ch_id, access_token)
+                stream_url, _, _ = get_playback_data(ch_id, access_token)
                 if stream_url:
                     match = re.search(r'/(?:live|cdn/live)/([^/]+)/', stream_url)
                     if match:
@@ -317,13 +349,13 @@ def main():
     if new_mappings:
         slug_mapping.update(new_mappings)
         save_slug_mapping(slug_mapping)
-        print(f"\n✓ Added {len(new_mappings)} new slug mappings")
+        print(f"\n✓ {len(new_mappings)}টি নতুন স্লাগ ম্যাপিং যোগ করা হয়েছে")
     
     print("\n" + "=" * 50)
-    print(f"✓ Complete! {total}/{len(channels)} channels")
-    print(f"  • API success: {api}")
-    print(f"  • Fallback: {fallback}")
-    print(f"  • Sports channels: {sports}")
+    print(f"✓ সম্পূর্ণ! {total}/{len(channels)}টি চ্যানেল")
+    print(f"  • এপিআই সফল: {api}")
+    print(f"  • ব্যাকআপ: {fallback}")
+    print(f"  • স্পোর্টস চ্যানেল: {sports}")
     print("=" * 50)
     
     for f in OUTPUT_FILES:
