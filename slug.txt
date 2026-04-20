@@ -1,6 +1,7 @@
+# Toffee Channel Slug Mapping
 # Format: Channel Name = slug
 
-BFL | Live 4 = match-18
+ BFL | Live 4 = match-18
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
@@ -77,4 +78,3 @@ Zee Cafe = zee_cafe_hd
 Zee Cinema HD = zee_cinema_hd
 Zee TV HD = zee_tv_hd
 Zing = zing_sd
-BD vs NZ = bdvsnz26
