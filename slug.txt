@@ -1,7 +1,8 @@
 # Toffee Channel Slug Mapping
 # Format: Channel Name = slug
+# Add * before slug to force mprod-cdn (e.g., BD vs NZ = *bdvsnz26)
 
- BFL | Live 4 = *match-4
+ BFL | Live 4 = match-4
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
