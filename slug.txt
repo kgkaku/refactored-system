@@ -11,6 +11,7 @@ Animal Planet HD = animal_planet_hd
 Asian TV = asian_tv
 B4U Movies APAC = b4u_movies
 B4U Music = b4u_music
+BD vs IRE = bd_vs_ire
 BD vs NZ = *bdvsnz26
 BFL | Live 1 = *match-11
 BFL | Live 2 = *match-12
