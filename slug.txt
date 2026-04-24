@@ -2,7 +2,7 @@
 # Format: Channel Name = slug
 # Add * before slug to force mprod-cdn (e.g., BD vs NZ = *bdvsnz26)
 
- BFL | Live 4 = *match-4
+ BFL | Live 4 = match-4
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
@@ -75,6 +75,7 @@ TLC = tlc_sd
 TLC HD = tlc_hd
 Toffee Dramas = toffee_drama
 Toffee Movies = toffee_movie
+Toffee Sports = sports_highlights
 Zee Action = zee_action
 Zee Anmol = zee_anmol
 Zee Bangla = zee_bangla
@@ -85,4 +86,3 @@ Zee Cinema HD = zee_cinema_hd
 Zee TV HD = zee_tv_hd
 Zing = zing_sd
 বলীখেলা = *boligiri26
-Toffee Sports = sports_highlights
