@@ -1,5 +1,6 @@
 # Toffee Channel Slugs
- BFL | Live 4 = match-18
+DRM-Test = drm_test
+BFL | Live 4 = *match-18
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
@@ -22,7 +23,6 @@ Cartoon Network = cartoon_network_sd
 Cartoon Network HD + = cartoon_network_hd
 Channel S = channel_s_tv
 Channel i = channel_i
-DRM-Test = drm_test
 Desh TV = desh_tv
 Discovery = discovery_sd
 Discovery HD = discovery_hd
