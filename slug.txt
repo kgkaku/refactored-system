@@ -1,6 +1,5 @@
 # Toffee Channel Slugs
-DRM-Test = drm_test
-BFL | Live 4 = *match-18
+ BFL | Live 4 = match-18
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
@@ -23,6 +22,7 @@ Cartoon Network = cartoon_network_sd
 Cartoon Network HD + = cartoon_network_hd
 Channel S = channel_s_tv
 Channel i = channel_i
+DRM-Test = drm_test
 Desh TV = desh_tv
 Discovery = discovery_sd
 Discovery HD = discovery_hd
@@ -65,7 +65,7 @@ Sony SAB HD = sonysab_hd
 Sony Ten Cricket = ten_cricket
 Sony Ten Sports 1 HD = sony_sports_1_hd
 Sony Ten Sports 2 HD = sony_sports_2_hd
-Sony Ten Sports 5 HD = sony_ten_sports_5_hd
+Sony Ten Sports 5 HD = sony_sports_5_hd
 Sony Ten Sports 5 HD  = sony_sports_5_hd
 Sony YAY = sonyyay
 TLC = tlc_sd
