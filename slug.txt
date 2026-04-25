@@ -1,5 +1,8 @@
 # Toffee Channel Slugs
- BFL | Live 4 = match-18
+# Format: Channel Name = slug
+# Add * before slug to force mprod-cdn (e.g., BD vs NZ = *bdvsnz26)
+
+ BFL | Live 4 = *match-4
 & Pictures HD = andpicture_hd
 &TV HD = and_tv_hd
 Ananda TV = anandatv
@@ -66,7 +69,7 @@ Sony Ten Cricket = ten_cricket
 Sony Ten Sports 1 HD = sony_sports_1_hd
 Sony Ten Sports 2 HD = sony_sports_2_hd
 Sony Ten Sports 5 HD = sony_sports_5_hd
-Sony Ten Sports 5 HD  = sony_sports_5_hd
+Sony Ten Sports 5 HD  = *sony_ten_sports_5_hd
 Sony YAY = sonyyay
 TLC = tlc_sd
 TLC HD = tlc_hd
